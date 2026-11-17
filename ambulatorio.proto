@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+// proto nao tem inteiro de 2 bytes, entao tipo_porto vira uint32 e tipo_ident vira float
+
+message ProcuraPorMedicoRequest {
+    float tipo_ident = 1;
+}
+
+message ProcuraPorMedicoResponse {
+    string tipo_ender = 1;
+    uint32 tipo_porto = 2;
+}
+
+message RegistraMedicoRequest {
+    float tipo_ident = 1;
+    uint32 tipo_porto = 2;
+}
+
+message RegistraMedicoResponse {
+    int32 status = 1;
+}
+
+message ChamaPacienteRequest {
+    float tipo_ident = 1;
+}
+
+message ChamaPacienteResponse {
+    float tipo_ident = 1;
+}
+
+message TerminoRequest { }
+
+message TerminoResponse {
+    int32 num_liberados = 1;
+}
+
+service Ambulatorio {
+    rpc ProcuraPorMedico(ProcuraPorMedicoRequest) returns (ProcuraPorMedicoResponse);
+    rpc RegistraMedico(RegistraMedicoRequest) returns (RegistraMedicoResponse);
+    rpc ChamaPaciente(ChamaPacienteRequest) returns (ChamaPacienteResponse);
+    rpc Termino(TerminoRequest) returns (TerminoResponse);
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message ConsultaRequest {
+    float tipo_ident = 1;
+    string descricao_problema = 2;
+}
+
+message ConsultaResponse {
+    float tipo_ident = 1;
+}
+
+service Consultorio {
+    rpc Consulta(ConsultaRequest) returns (ConsultaResponse);
+}
