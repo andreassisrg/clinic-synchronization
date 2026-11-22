@@ -1,17 +1,15 @@
-# fspd-tp
+# Clinic Synchronization
 
-Trabalho prático de Fundamentos de Sistemas Paralelos e Distribuídos (DCC/UFMG).
+A small urgent-care clinic built with gRPC in Python. Doctors and patients meet at the clinic, which pairs them up, and the appointment then happens directly in the doctor's office. The project combines RPC with thread synchronization inside the servers, using only locks, condition variables and semaphores.
 
-É um mini pronto atendimento feito com gRPC em Python. Os médicos e os pacientes se encontram no ambulatório, que faz o pareamento entre eles, e depois a consulta acontece direto no consultório do médico. O foco do trabalho é juntar RPC com sincronização de threads dentro dos servidores, usando só lock, variável de condição e semáforo.
+## How it works
 
-## Como funciona
+There are four programs:
 
-São quatro programas:
-
-- `ambulatorio.py`: servidor central. Guarda a fila de pacientes sentados na ante-sala e a fila de médicos livres, e junta um com o outro na ordem de chegada
-- `medico.py`: sobe o servidor do consultório, se registra no ambulatório e fica num loop chamando paciente e atendendo
-- `paciente.py`: procura um médico no ambulatório e, se achar, vai no consultório fazer a consulta
-- `fim_de_expediente.py`: só chama o término no ambulatório, que libera quem tava esperando e desliga o servidor
+- `ambulatorio.py` (clinic): the central server. It keeps the queue of patients seated in the waiting room and the queue of free doctors, and pairs them in order of arrival.
+- `medico.py` (doctor): starts the office server, registers with the clinic, and loops calling patients and seeing them.
+- `paciente.py` (patient): asks the clinic for a doctor and, if one is found, goes to the doctor's office for the appointment.
+- `fim_de_expediente.py` (end of shift): calls the clinic's shutdown, which releases everyone still waiting and stops the server.
 
 ```
                  ProcuraPorMedico                  RegistraMedico
@@ -19,56 +17,52 @@ São quatro programas:
       |                                            ChamaPaciente    ^
       |                                                             |
       +------------------------- Consulta --------------------------+
-                          (servidor do consultorio)
+                          (doctor's office server)
 ```
 
-As interfaces ficam em `ambulatorio.proto` e `consultorio.proto`.
+The interfaces are defined in `ambulatorio.proto` and `consultorio.proto`.
 
-## Requisitos
-
-Basta usar o venv:
+## Requirements
 
 ```bash
-source fspd-tp-venv/bin/activate
+pip install grpcio grpcio-tools
 ```
 
-## Rodando
+## Running
 
-Primeiro gera os stubs a partir dos `.proto`:
+First generate the stubs from the `.proto` files:
 
 ```bash
 make stubs
 ```
 
-Os stubs (`*_pb2.py`, `*_pb2_grpc.py`, `*_pb2.pyi`) não ficam no repositório, é só rodar `make stubs`.
-
-Pra apagar os arquivos gerados e deixar só o que é da entrega:
+The stubs (`*_pb2.py`, `*_pb2_grpc.py`, `*_pb2.pyi`) are not tracked in the repository. To delete them:
 
 ```bash
 make clean
 ```
 
-Argumentos de cada programa:
+Arguments for each program:
 
-| programa | argumentos |
+| program | arguments |
 | --- | --- |
-| `ambulatorio.py` | `cadeiras medicos porta` |
-| `medico.py` | `porta_consultorio id_medico tempo_consulta endereco_ambulatorio porta_ambulatorio` |
-| `paciente.py` | `id_paciente problema endereco_ambulatorio porta_ambulatorio` |
-| `fim_de_expediente.py` | `endereco_ambulatorio porta_ambulatorio` |
+| `ambulatorio.py` | `chairs doctors port` |
+| `medico.py` | `office_port doctor_id appointment_time clinic_address clinic_port` |
+| `paciente.py` | `patient_id problem clinic_address clinic_port` |
+| `fim_de_expediente.py` | `clinic_address clinic_port` |
 
-Exemplo com o médico chegando primeiro (é o caso 1 do enunciado):
+Example with the doctor arriving first:
 
 ```bash
 python3 ambulatorio.py 2 2 9999 > amb.out 2>&1 &
 python3 medico.py 9991 99.1 2 localhost 9999 > med1.out 2>&1 &
 sleep 1
-python3 paciente.py 6.1 enxaqueca localhost 9999 > pac1.out 2>&1 &
+python3 paciente.py 6.1 migraine localhost 9999 > pac1.out 2>&1 &
 sleep 5
 python3 fim_de_expediente.py localhost 9999 > fim.out 2>&1
 ```
 
-Saída do ambulatório nesse caso:
+Clinic output for this run:
 
 ```
   0.0: mytime started at Tue Nov 17 09:28:10 2026
@@ -86,6 +80,6 @@ Saída do ambulatório nesse caso:
   6.1: ATER -> 1
 ```
 
-O `%5B::1%5D` é o `::1` (localhost em IPv6) do jeito que o `context.peer()` do gRPC devolve. O paciente usa esse endereço direto pra conectar no consultório e funciona normal.
+`%5B::1%5D` is `::1` (IPv6 localhost) in the form returned by gRPC's `context.peer()`. The patient uses this address as is to connect to the doctor's office.
 
-Toda saída passa pelo `tstamp_msg` do `mytimer.py`, que é o módulo de tempo fornecido pelo professor. Nenhum outro print é feito, porque a correção é automática e compara stdout e stderr.
+All output goes through `tstamp_msg` in `mytimer.py`, which prefixes each line with the elapsed time in seconds. Nothing else is printed, so every program's log has a fixed format.

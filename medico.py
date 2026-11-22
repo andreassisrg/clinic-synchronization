@@ -14,14 +14,14 @@ class ConsultorioServicer(consultorio_pb2_grpc.ConsultorioServicer):
         super().__init__()
         self.id_medico = id_medico
 
-        # dados que a thread da consulta passa pra main depois que o paciente entra
+        # data the appointment thread hands to the main thread once the patient comes in
         self.id_paciente_atual = 0
         self.problema_paciente_atual = ''
 
-        # um semaforo pra cada sinal entre a thread da consulta e a main
-        self.porta_aberta = threading.Semaphore(0)       # main -> consulta: medico pronto pra atender
-        self.paciente_entrou = threading.Semaphore(0)    # consulta -> main: dados do paciente ja salvos
-        self.consulta_terminou = threading.Semaphore(0)  # main -> consulta: acabou o sleep, pode ir embora
+        # one semaphore per signal between the appointment thread and the main thread
+        self.porta_aberta = threading.Semaphore(0)       # main -> appointment: doctor is ready
+        self.paciente_entrou = threading.Semaphore(0)    # appointment -> main: patient data is stored
+        self.consulta_terminou = threading.Semaphore(0)  # main -> appointment: sleep is over, patient may leave
 
 
     def Consulta(self, request, context):
@@ -46,7 +46,7 @@ def serve():
     endereco_ambulatorio = sys.argv[4]
     porta_ambulatorio = int(sys.argv[5])
 
-    # sobe o consultorio antes de registrar, senao um paciente pode chegar antes do servidor existir
+    # start the office server before registering, otherwise a patient could arrive before it exists
     consultorio = ConsultorioServicer(id_medico)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     consultorio_pb2_grpc.add_ConsultorioServicer_to_server(consultorio, server)
@@ -63,7 +63,7 @@ def serve():
         ))
         status_registro = registra_medico_response.status
     except grpc.RpcError:
-        # ambulatorio fora do ar, conta como registro que falhou
+        # clinic is down: count it as a failed registration
         status_registro = -1
 
     mytimer.tstamp_msg(f'MI({id_medico:4.1f}) x {tempo_consulta:3.1f} @ {porta_consultorio} = {status_registro}')
@@ -76,7 +76,7 @@ def serve():
             ))
             id_paciente = chama_paciente_response.tipo_ident
         except grpc.RpcError:
-            # ambulatorio ja fechou enquanto o medico atendia, entao eh fim de expediente tambem
+            # the clinic closed while the doctor was seeing a patient, so the shift is over too
             id_paciente = 0
         mytimer.tstamp_msg(f'MCPR -> {id_paciente:4.1f}')
 

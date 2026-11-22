@@ -25,18 +25,18 @@ def main():
         endereco_medico = procura_por_medico_response.tipo_ender
         porto_medico = procura_por_medico_response.tipo_porto
     except grpc.RpcError:
-        # ambulatorio fechado, eh como se nao tivesse medico
+        # clinic is closed: same as no doctor available
         endereco_medico = ''
         porto_medico = 0
     channel_ambulatorio.close()
 
     mytimer.tstamp_msg(f'PPMR({endereco_medico}:{porto_medico})')
 
-    # porta 0 eh sala cheia ou fim de expediente, vai embora
+    # port 0 means a full waiting room or the end of the shift: leave
     if porto_medico == 0:
         return
 
-    # o endereco vem do peer() do ambulatorio, tipo %5B::1%5D, e o grpc aceita ele direto
+    # the address comes from the clinic's peer(), e.g. %5B::1%5D, and gRPC accepts it as is
     channel_medico = grpc.insecure_channel(f'{endereco_medico}:{porto_medico}')
     stub_medico = consultorio_pb2_grpc.ConsultorioStub(channel_medico)
 

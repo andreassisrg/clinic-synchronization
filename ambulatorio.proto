@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-// proto nao tem inteiro de 2 bytes, entao tipo_porto vira uint32 e tipo_ident vira float
+// proto has no 2-byte integer, so tipo_porto is a uint32 and tipo_ident is a float
 
 message ProcuraPorMedicoRequest {
     float tipo_ident = 1;
