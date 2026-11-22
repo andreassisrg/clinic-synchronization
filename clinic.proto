@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+// proto has no 2-byte integer, so port is a uint32 and id is a float
+
+message FindDoctorRequest {
+    float id = 1;
+}
+
+message FindDoctorResponse {
+    string address = 1;
+    uint32 port = 2;
+}
+
+message RegisterDoctorRequest {
+    float id = 1;
+    uint32 port = 2;
+}
+
+message RegisterDoctorResponse {
+    int32 status = 1;
+}
+
+message CallPatientRequest {
+    float id = 1;
+}
+
+message CallPatientResponse {
+    float id = 1;
+}
+
+message TerminateRequest { }
+
+message TerminateResponse {
+    int32 num_released = 1;
+}
+
+service Clinic {
+    rpc FindDoctor(FindDoctorRequest) returns (FindDoctorResponse);
+    rpc RegisterDoctor(RegisterDoctorRequest) returns (RegisterDoctorResponse);
+    rpc CallPatient(CallPatientRequest) returns (CallPatientResponse);
+    rpc Terminate(TerminateRequest) returns (TerminateResponse);
+}

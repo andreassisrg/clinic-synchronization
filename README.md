@@ -6,21 +6,21 @@ A small urgent-care clinic built with gRPC in Python. Doctors and patients meet 
 
 There are four programs:
 
-- `ambulatorio.py` (clinic): the central server. It keeps the queue of patients seated in the waiting room and the queue of free doctors, and pairs them in order of arrival.
-- `medico.py` (doctor): starts the office server, registers with the clinic, and loops calling patients and seeing them.
-- `paciente.py` (patient): asks the clinic for a doctor and, if one is found, goes to the doctor's office for the appointment.
-- `fim_de_expediente.py` (end of shift): calls the clinic's shutdown, which releases everyone still waiting and stops the server.
+- `clinic.py`: the central server. It keeps the queue of patients seated in the waiting room and the queue of free doctors, and pairs them in order of arrival.
+- `doctor.py`: starts the office server, registers with the clinic, and loops calling patients and seeing them.
+- `patient.py`: asks the clinic for a doctor and, if one is found, goes to the doctor's office for the appointment.
+- `end_of_shift.py`: calls the clinic's shutdown, which releases everyone still waiting and stops the server.
 
 ```
-                 ProcuraPorMedico                  RegistraMedico
-   paciente  ----------------------> ambulatorio <---------------- medico
-      |                                            ChamaPaciente    ^
+                    FindDoctor                   RegisterDoctor
+    patient  ----------------------> clinic <------------------- doctor
+      |                                          CallPatient        ^
       |                                                             |
-      +------------------------- Consulta --------------------------+
+      +----------------------- Consultation ------------------------+
                           (doctor's office server)
 ```
 
-The interfaces are defined in `ambulatorio.proto` and `consultorio.proto`.
+The interfaces are defined in `clinic.proto` and `office.proto`.
 
 ## Requirements
 
@@ -46,20 +46,20 @@ Arguments for each program:
 
 | program | arguments |
 | --- | --- |
-| `ambulatorio.py` | `chairs doctors port` |
-| `medico.py` | `office_port doctor_id appointment_time clinic_address clinic_port` |
-| `paciente.py` | `patient_id problem clinic_address clinic_port` |
-| `fim_de_expediente.py` | `clinic_address clinic_port` |
+| `clinic.py` | `chairs doctors port` |
+| `doctor.py` | `office_port doctor_id appointment_time clinic_address clinic_port` |
+| `patient.py` | `patient_id problem clinic_address clinic_port` |
+| `end_of_shift.py` | `clinic_address clinic_port` |
 
 Example with the doctor arriving first:
 
 ```bash
-python3 ambulatorio.py 2 2 9999 > amb.out 2>&1 &
-python3 medico.py 9991 99.1 2 localhost 9999 > med1.out 2>&1 &
+python3 clinic.py 2 2 9999 > clinic.out 2>&1 &
+python3 doctor.py 9991 99.1 2 localhost 9999 > doctor1.out 2>&1 &
 sleep 1
-python3 paciente.py 6.1 migraine localhost 9999 > pac1.out 2>&1 &
+python3 patient.py 6.1 migraine localhost 9999 > patient1.out 2>&1 &
 sleep 5
-python3 fim_de_expediente.py localhost 9999 > fim.out 2>&1
+python3 end_of_shift.py localhost 9999 > end.out 2>&1
 ```
 
 Clinic output for this run:

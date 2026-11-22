@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message ConsultationRequest {
+    float id = 1;
+    string problem_description = 2;
+}
+
+message ConsultationResponse {
+    float id = 1;
+}
+
+service Office {
+    rpc Consultation(ConsultationRequest) returns (ConsultationResponse);
+}
